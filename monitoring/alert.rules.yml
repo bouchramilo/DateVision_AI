@@ -1,0 +1,23 @@
+groups:
+- name: CliniQ-alerts
+  rules:
+  
+  # Latency Alert
+  - alert: HighRequestLatency
+    expr: rag_processing_seconds_sum / rag_processing_seconds_count > 5
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High RAG Request Latency"
+      description: "Average RAG request processing time is > 5s (current value: {{ $value }}s)"
+
+  # Error Rate Alert
+  - alert: HighErrorRate
+    expr: rate(rag_request_total{status="error"}[5m]) > 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High RAG Error Rate"
+      description: "RAG requests are failing"

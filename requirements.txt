@@ -1,0 +1,29 @@
+# DateVision AI Dependencies
+
+# Web API
+fastapi
+uvicorn
+pydantic-settings
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+
+# AI - Computer Vision
+ultralytics
+opencv-python-headless
+
+# AI - LLM & Vector DB
+openai
+qdrant-client
+
+# Database
+sqlalchemy
+psycopg2-binary
+
+# MLOps & Monitoring
+mlflow
+prometheus-client
+evidently
+
+# Utils
+python-dotenv
