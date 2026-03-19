@@ -1,0 +1,14 @@
+artifact_uri: file:c:/Users/ramas/OneDrive/Desktop/DateVision_AI/notebooks/runs/mlflow/697979084589713528/0bc840953f064f258a376f965a139612/artifacts
+end_time: 1773856630580
+entry_point_name: ''
+experiment_id: '697979084589713528'
+lifecycle_stage: active
+run_id: 0bc840953f064f258a376f965a139612
+run_name: train
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1773832199544
+status: 3
+tags: []
+user_id: ramas
