@@ -29,8 +29,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy installed dependencies from builder
 COPY --from=builder /install /usr/local
 
-# Copy application code
+# Copy application code and models
 COPY app/ ./app/
+COPY models/ ./models/
 
 # Expose port
 EXPOSE 8000

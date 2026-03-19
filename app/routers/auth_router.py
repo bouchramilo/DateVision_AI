@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from app.schemas.user_schema import UserCreate, UserLogin, UserLoginResponse
+from app.schemas.user_schema import UserCreate, UserLogin, UserLoginResponse, User as UserSchema
 from app.core.database import get_db
 from app.repositories.user_repository import check_user_existe, create_user, get_user_by_email, update_activation_user
 from app.core.logger import logger
@@ -17,24 +17,36 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 # !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # REGISTER USER
 # !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-@auth_router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register_user(user_data: UserCreate, db: Session = Depends(get_db)) -> dict:
+@auth_router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserSchema)
+async def register_user(user_data: UserCreate, db: Session = Depends(get_db)) -> UserSchema:
     try:
-        db_user = check_user_existe(
-            db=db,
-            email=user_data.email,
-        )
+        # Vérifier si l'utilisateur existe déjà
+        db_user = check_user_existe(db=db, email=user_data.email)
 
         if db_user:
+            logger.error(f"❌ Tentative d'inscription avec email existant: {user_data.email}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User déjà existant avec cet email",
             )
 
-        return create_user(db=db, user= user_data)
+        # Créer l'utilisateur dans la base de données
+        new_user = create_user(db=db, user=user_data)
+        
+        # Convertir l'objet SQLAlchemy en modèle Pydantic pour la réponse
+        user_response = UserSchema.model_validate(new_user)
+        
+        logger.info(f"✅ Utilisateur créé avec succès: {new_user.username}")
+        return user_response
+        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌❌ Erreur lors de l'inscription de l'utilisateur : {e} ❌")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de l'inscription de l'utilisateur : {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Erreur lors de l'inscription de l'utilisateur"
+        )
 # !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
