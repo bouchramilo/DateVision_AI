@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # General
-    PROJECT_NAME: str = Field(default="CliniQ API", validation_alias="PROJECT_NAME")
+    PROJECT_NAME: str = Field(default="DateVision API", validation_alias="PROJECT_NAME")
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "dev"
@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str = Field(...) 
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 11520
+    
+    # MODELS
+    MODEL_CLASSIFICATION_BY_VARIETY: str = "model_classes_variete_googlenet_model.pth"
+    MODEL_CLASSIFICATION_BY_MATURITY: str = "model_classes_maturity_googlenet_model.pth"
+    MODEL_DETECTION: str = "date_detector_model.pt"
     
     # Database Configuration - requis
     POSTGRES_USER: str
