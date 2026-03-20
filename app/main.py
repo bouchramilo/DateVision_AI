@@ -8,11 +8,23 @@ from app.routers.pridect_router import pridect_router
 from app.core.config import settings
 from app.core.database import init_db
 from fastapi.middleware.cors import CORSMiddleware
+from app.services.model_loader import load_all_models
 
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    print("🔄 Initialisation de l'application...")
+
     init_db()
+
+    # Charger les modèles ici
+    load_all_models()
+
+    print("✅ Application prête !")
+
     yield
+
+    print("🛑 Shutdown application")
 
 
 # !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

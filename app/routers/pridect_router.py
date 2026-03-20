@@ -6,21 +6,10 @@ import numpy as np
 import io
 from PIL import Image
 
-from app.services.predict_variety import predict_image
-
+from app.repositories.prediction_repository import run_prediction_pipeline
+from app.utils.image_util import image_to_base64
 
 pridect_router = APIRouter(prefix="/pridect", tags=["pridection"])
-
-
-# =========================================================
-# 🔹 UTILS
-# =========================================================
-def image_to_base64(img: np.ndarray) -> str:
-    """Convertit image numpy → base64"""
-    success, buffer = cv2.imencode(".jpg", img)
-    if not success:
-        raise ValueError("Error encoding image")
-    return base64.b64encode(buffer).decode("utf-8")
 
 
 # =========================================================
@@ -37,12 +26,11 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be an image")
 
     try:
-        # 🔹 Lire image (file-like)
+        # 🔹 Lire image
         image_bytes = await file.read()
-        image = Image.open(io.BytesIO(image_bytes))
-
-        # 🔹 Prediction
-        result = predict_image(image)
+        
+        # 🔹 Prediction via Repository
+        result = run_prediction_pipeline(io.BytesIO(image_bytes))
 
         # 🔹 Convertir image annotée → base64
         img_base64 = image_to_base64(result["annotated_image"])
