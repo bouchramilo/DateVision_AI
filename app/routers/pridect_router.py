@@ -38,6 +38,7 @@ async def predict(file: UploadFile = File(...)):
         return {
             "success": True,
             "detections": result["detections"],
+            "report": result["report"],
             "image": img_base64
         }
 
