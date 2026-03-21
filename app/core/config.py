@@ -18,6 +18,14 @@ class Settings(BaseSettings):
     MODEL_CLASSIFICATION_BY_MATURITY: str = "model_classes_maturity_googlenet_model.pth"
     MODEL_DETECTION: str = "date_detector_model.pt"
     
+    # =========================
+    # LLM CONFIG
+    # =========================
+    LLM_PROVIDER: str = "ollama"
+
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.1"
+    
     # Database Configuration - requis
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
