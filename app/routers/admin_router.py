@@ -12,7 +12,7 @@ from app.repositories.history_repository import get_all_histories_repo
 from app.services.history_service import get_user_statistics
 from app.models.user_model import User as UserModel
 
-
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 admin_router = APIRouter(prefix="/admin", tags=["admin routes"])
 
 
@@ -62,11 +62,11 @@ def get_all_histories(
         raise HTTPException(status_code=500, detail="Error fetching histories")
     
     
+
+
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # 🔹 ALL HISTORIES (ADMIN)
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
 @admin_router.get("/users/{user_id}/stats", response_model=Dict[str, Any])
 async def get_user_stats_admin(
     user_id: int,
@@ -95,10 +95,6 @@ async def get_user_stats_admin(
             detail=f"Erreur lors de la récupération des statistiques: {str(e)}"
         )
         
-        
-        
-        
-
 
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # 🔹 ALL STATS (ADMIN)

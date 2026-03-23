@@ -17,9 +17,9 @@ from app.utils.image_util import image_to_base64
 pridect_router = APIRouter(prefix="/pridect", tags=["pridection"])
 
 
-# =========================================================
+# !=========================================================
 #  ENDPOINT : PREDICT
-# =========================================================
+# !=========================================================
 @pridect_router.post("/predict", response_model=Dict[str, Any])
 async def predict(
     db: Session = Depends(get_db), 

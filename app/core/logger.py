@@ -1,6 +1,7 @@
 import logging 
 import sys
 
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 class AppLogger():
     @staticmethod
     def setup_logging(level=logging.INFO):
