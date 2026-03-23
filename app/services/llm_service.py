@@ -42,6 +42,9 @@ def build_prompt(results):
     2. **Variétés** : Distribution par variété (pourcentage et nombre)
     3. **Maturité** : Répartition par stade de maturité (pourcentage et nombre)
     4. **Observations** : Synthèse des tendances principales
+    
+    • Variétés de dattes : Majhoul, Boufaguos, Kholt, et Bouisthami.
+    • Étapes de maturité : Stage 1 (Immature), Stage 2 (Khalal), Stage 3 (Rutab), Stage 4 (Tamar).
 
     Directives :
     - Style : concis, technique et factuel
@@ -61,9 +64,11 @@ def build_prompt(results):
     ...
 
     ## 🍂 Répartition par maturité
-    - Stage 1 (Verte) : X (X%)
-    - Stage 2 (Mûre) : X (X%)
-    ...
+    - Stage 1 (Immature) : X (X%)
+    - Stage 2 (Khalal) : X (X%)
+    - Stage 3 (Rutab) : X (X%)
+    - Stage 4 (Tamar) : X (X%)
+    
 
     ## 💡 Observations
     - [Point clé 1]
