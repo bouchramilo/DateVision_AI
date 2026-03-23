@@ -22,4 +22,4 @@ class User(Base):
     is_active = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # queries = relationship("Query", back_populates="user")
+    histories = relationship("History", back_populates="user", cascade="all, delete")

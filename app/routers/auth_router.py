@@ -7,6 +7,7 @@ from app.repositories.user_repository import check_user_existe, create_user, get
 from app.core.logger import logger
 from app.security.hashing import verify_password
 from app.security.manage_token import create_access_token
+from app.core.deps import get_current_user
 
 
 # !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -74,3 +75,12 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
         logger.error(f"Error during login: {e}")
         raise HTTPException(status_code=501, detail=f"Error lors la login : {e}")
 # !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# GET ME (user)
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+@auth_router.get("/me")
+def get_me(current_user = Depends(get_current_user)):
+    return current_user
