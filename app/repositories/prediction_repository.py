@@ -11,9 +11,12 @@ from app.services.upload_img_service import load_image, pil_to_numpy
 from app.services.llm_service import generate_report
 from app.utils.image_util import image_to_base64
 # Labels
+
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 VARIETY_LABELS = ['Boufagous', 'bouisthami', 'Boumajhoul', 'kholt']
 MATURITY_LABELS = ["Stage 1", "Stage 2", "Stage 3", "Stage 4"]
 
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 def run_prediction_pipeline(image_file) -> Dict[str, Any]:
     # 1. Load image
     pil_img = load_image(image_file)

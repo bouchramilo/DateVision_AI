@@ -5,7 +5,7 @@ import torch
 from torchvision import transforms
 
 # =========================================================
-# 🔹 LOAD IMAGE
+# LOAD IMAGE
 # =========================================================
 def load_image(image_file) -> Image.Image:
     """Charge une image (file, buffer ou PIL)"""
@@ -15,7 +15,7 @@ def load_image(image_file) -> Image.Image:
 
 
 # =========================================================
-# 🔹 CONVERSIONS
+# CONVERSIONS
 # =========================================================
 def pil_to_numpy(pil_img: Image.Image) -> np.ndarray:
     return np.array(pil_img)
@@ -26,7 +26,7 @@ def rgb_to_bgr(img: np.ndarray) -> np.ndarray:
 
 
 # =========================================================
-# 🔹 DETECTION PREPROCESS (YOLO)
+# DETECTION PREPROCESS (YOLO)
 # =========================================================
 def preprocess_for_detection(image_file) -> np.ndarray:
     """
@@ -39,7 +39,7 @@ def preprocess_for_detection(image_file) -> np.ndarray:
 
 
 # =========================================================
-# 🔹 CLASSIFICATION PREPROCESS (Torch)
+# CLASSIFICATION PREPROCESS (Torch)
 # =========================================================
 def get_classification_transform():
     return transforms.Compose([
@@ -53,7 +53,7 @@ def get_classification_transform():
 
 
 # =========================================================
-# 🔹 CLASSIFICATION PREPROCESS 
+# CLASSIFICATION PREPROCESS 
 # =========================================================
 def preprocess_for_classification(image, device: torch.device):
     """

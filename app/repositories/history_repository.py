@@ -14,9 +14,9 @@ from app.models.history_model import History
 from app.models.result_model import Result
 
 
-# =========================================================
+# !=========================================================
 # 🔹 CREATE (SAVE)
-# =========================================================
+# !=========================================================
 def save_full_result(db, user_id, image, result):
 
     # 1. créer history
@@ -54,9 +54,9 @@ def save_full_result(db, user_id, image, result):
     return history
 
 
-# =========================================================
+# !=========================================================
 # 🔹 MAIN FUNCTION (READ)
-# =========================================================
+# !=========================================================
 def get_all_histories_repo(
     db: Session,
     user_id: Optional[int] = None,
@@ -110,10 +110,12 @@ def get_all_histories_repo(
     
     
     
-# =========================================================
 
 
 
+# !=========================================================
+# GET STATS (par USER)
+# !=========================================================
 def get_user_stats(db: Session, user_id: int) -> Dict[str, Any]:
     """Récupère les statistiques complètes d'un utilisateur"""
     
@@ -150,6 +152,10 @@ def get_user_stats(db: Session, user_id: int) -> Dict[str, Any]:
     }
 
 
+
+# !=========================================================
+# GET STATS (par ADMIN)
+# !=========================================================
 def get_user_summary_stats(db: Session, user_id: int) -> Dict[str, Any]:
     """Statistiques résumées de l'utilisateur"""
     
@@ -202,6 +208,7 @@ def get_user_summary_stats(db: Session, user_id: int) -> Dict[str, Any]:
     }
 
 
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 def get_user_classifications_stats(db: Session, user_id: int) -> Dict[str, List[Dict[str, Any]]]:
     """Statistiques par variété et maturité"""
     
@@ -254,7 +261,7 @@ def get_user_classifications_stats(db: Session, user_id: int) -> Dict[str, List[
         "maturities": maturities
     }
 
-
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 def get_user_weekly_activity(db: Session, user_id: int) -> List[Dict[str, Any]]:
     """Activité des 7 derniers jours"""
     
@@ -295,6 +302,7 @@ def get_user_weekly_activity(db: Session, user_id: int) -> List[Dict[str, Any]]:
     return result
 
 
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 def get_user_detection_scores_distribution(db: Session, user_id: int) -> Dict[str, int]:
     """Distribution des scores de détection"""
     
@@ -347,7 +355,7 @@ def get_user_detection_scores_distribution(db: Session, user_id: int) -> Dict[st
         "poor": poor
     }
 
-
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 def get_user_recent_predictions(db: Session, user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
     """Récupère les prédictions récentes de l'utilisateur"""
     
