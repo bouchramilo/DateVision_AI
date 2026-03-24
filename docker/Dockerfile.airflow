@@ -1,0 +1,12 @@
+FROM apache/airflow:2.8.1
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libgl1 \
+    libglib2.0-0 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+USER airflow
+COPY airflow/requirements_airflow.txt /requirements_airflow.txt
+RUN pip install --no-cache-dir -r /requirements_airflow.txt

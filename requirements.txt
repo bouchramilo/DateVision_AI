@@ -25,6 +25,15 @@ psycopg2-binary
 mlflow
 prometheus-client
 evidently
+apache-airflow
 
 # Utils
 python-dotenv
+
+
+torch
+torchvision
+scikit-learn
+opencv-python
+split-folders
+pytest

@@ -40,5 +40,8 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
+# airflow
+RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
 # Startup command
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

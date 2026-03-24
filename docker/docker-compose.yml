@@ -23,6 +23,7 @@ services:
       - ../app:/app/app
       - ../data:/app/data
       - ../models:/app/models
+      - ../tests:/app/tests
 
   db:
     image: postgres:15-alpine
@@ -35,6 +36,7 @@ services:
       - POSTGRES_DB=DateVision_DB
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - DateVision_network
     healthcheck:
@@ -70,9 +72,10 @@ services:
     container_name: DateVision_mlflow
     ports:
       - "5000:5000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     networks:
       - DateVision_network
-    # Use environment if needed, standard mlflow entrypoint is usually fine
 
   prometheus:
     image: prom/prometheus:latest
@@ -95,6 +98,95 @@ services:
       - DateVision_network
     depends_on:
       - prometheus
+
+  # Airflow Services
+  airflow-common:
+    &airflow-common
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.airflow
+    image: datevision-airflow:latest
+    environment:
+      &airflow-common-env
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@db:5432/airflow_db
+      AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+      AIRFLOW_UID: ${AIRFLOW_UID:-50000}
+    env_file:
+      - ../.env
+    volumes:
+      - ../airflow/dags:/opt/airflow/dags
+      - ../airflow/logs:/opt/airflow/logs
+      - ../airflow/plugins:/opt/airflow/plugins
+      - ../airflow/tasks:/opt/airflow/dags/tasks
+      - ../airflow/functions:/opt/airflow/dags/functions
+      - ../airflow/config:/opt/airflow/dags/config
+      - ../airflow/classification_config.py:/opt/airflow/classification_config.py
+      - ../data:/opt/airflow/data
+      - ../models:/opt/airflow/models
+      - ../analyse_configuration:/opt/airflow/analyse_configuration
+      - ../tests:/opt/airflow/tests
+    user: "${AIRFLOW_UID:-50000}:0"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - DateVision_network
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    container_name: DateVision_airflow_webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    container_name: DateVision_airflow_scheduler
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: DateVision_airflow_init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
 
 networks:
   DateVision_network:
