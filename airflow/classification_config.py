@@ -26,6 +26,8 @@ VARIETY_CONFIG = {
     "epochs": 1,
     "learning_rate": 0.0001,
     "target_per_class": 1500,
+    # "device": "cuda",
+    "device": "cpu"
 }
 
 # Configuration pour la classification par maturité
@@ -42,4 +44,6 @@ MATURITY_CONFIG = {
     "epochs": 1,
     "learning_rate": 0.0001,
     "target_per_class": 1500,
+    # "device": "cuda",
+    "device": "cpu"
 }

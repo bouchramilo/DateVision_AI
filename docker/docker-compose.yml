@@ -12,7 +12,6 @@ services:
       - DATABASE_URL=postgresql://postgres:password@db:5432/DateVision_DB
       - ENVIRONMENT=development
       - OLLAMA_BASE_URL=http://ollama:11434
-      - QDRANT_URL=http://vector_db:6333
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     depends_on:
       db:
@@ -46,15 +45,6 @@ services:
       retries: 5
 
   # AI Services
-  vector_db:
-    image: qdrant/qdrant:latest
-    container_name: DateVision_qdrant
-    ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    networks:
-      - DateVision_network
 
   ollama:
     image: ollama/ollama:latest
@@ -67,13 +57,45 @@ services:
       - DateVision_network
 
   # MLOps & Monitoring
+  
+  mlflow-db:
+    image: postgres:15-alpine
+    container_name: DateVision_mlflow_db
+    environment:
+      - POSTGRES_USER=mlflow_user
+      - POSTGRES_PASSWORD=mlflow_password
+      - POSTGRES_DB=mlflow_db
+    volumes:
+      - mlflow_postgres_data:/var/lib/postgresql/data
+    networks:
+      - DateVision_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlflow_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   mlflow:
     image: ghcr.io/mlflow/mlflow:latest
     container_name: DateVision_mlflow
     ports:
       - "5000:5000"
+    volumes:
+      - ../mlflow_data:/app/mlflow
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://mlflow_user:mlflow_password@mlflow-db:5432/mlflow_db
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+      --serve-artifacts
+      --allowed-hosts '*'
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_ARTIFACT_URI=/app/mlflow/artifacts
+    depends_on:
+      mlflow-db:
+        condition: service_healthy
     networks:
       - DateVision_network
 
@@ -115,6 +137,11 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
       AIRFLOW_UID: ${AIRFLOW_UID:-50000}
+      # Ajouter ces variables pour MLflow
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_TRACKING_INSECURE_TLS: 'true'
+      MLFLOW_TRACKING_IGNORE_TLS: 'true'
+      MLFLOW_DISABLE_HOSTNAME_VALIDATION: 'true'
     env_file:
       - ../.env
     volumes:
@@ -125,6 +152,7 @@ services:
       - ../airflow/functions:/opt/airflow/dags/functions
       - ../airflow/config:/opt/airflow/dags/config
       - ../airflow/classification_config.py:/opt/airflow/classification_config.py
+      - ../airflow/mlflow_utils.py:/opt/airflow/dags/functions/mlflow_utils.py
       - ../data:/opt/airflow/data
       - ../models:/opt/airflow/models
       - ../analyse_configuration:/opt/airflow/analyse_configuration
@@ -133,9 +161,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mlflow:
+        condition: service_started
     networks:
       - DateVision_network
-
   airflow-webserver:
     <<: *airflow-common
     command: webserver
@@ -194,6 +223,6 @@ networks:
 
 volumes:
   postgres_data:
-  qdrant_data:
   ollama_data:
   grafana_data:
+  mlflow_postgres_data:

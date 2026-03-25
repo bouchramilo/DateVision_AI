@@ -1,6 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from tasks.detection_tasks import *
 from config.detection_config import *
@@ -9,8 +9,13 @@ from config.detection_config import *
 # DAG : detection
 # =========================================================================
 default_args = {
-    "owner": "airflow",
-    "start_date": datetime(2024, 1, 1),
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 1, 1), 
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
 }
 
 with DAG(
@@ -21,6 +26,7 @@ with DAG(
     description="Pipeline YOLOv8 detection dattes",
     tags=["AI", "YOLO", "detection"]
 ) as dag:
+
 
 # tasks --------------------------------
     clean = PythonOperator(
