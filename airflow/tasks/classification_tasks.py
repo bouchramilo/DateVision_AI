@@ -177,32 +177,35 @@ def create_balanced_loaders(config, dataset_info):
 # ============================================================================
 @task
 def train_model_task(config, dataset_info, loaders_info):
-    """Tâche : Entraînement du modèle"""
-    
-    # Recharger les datasets et loaders
+
+    from pathlib import Path
+
+    # ✅ Normalisation
+    model_path_obj = Path(config['model_path'])
+
     train_dir = dataset_info['train_dir']
     val_dir = dataset_info['val_dir']
-    
+
     train_transforms = get_transforms(config['image_size'], augment=True)
     val_transforms = get_transforms(config['image_size'], augment=False)
-    
+
     train_dataset = ImageFolder(train_dir, transform=train_transforms)
     val_dataset = ImageFolder(val_dir, transform=val_transforms)
-    
-    # Sampler équilibré
-    sampler = create_balanced_sampler(train_dataset, target_per_class=config['target_per_class'])
+
+    sampler = create_balanced_sampler(
+        train_dataset,
+        target_per_class=config['target_per_class']
+    )
+
     train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], sampler=sampler)
     val_loader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False)
-    
-    # Créer le modèle
+
     device = torch.device(config['device'])
     model = create_model(config['num_classes'], device)
-    
-    # Optimiseur (seulement les paramètres de la dernière couche)
+
     optimizer = torch.optim.Adam(model.fc.parameters(), lr=config['learning_rate'])
     loss_function = torch.nn.CrossEntropyLoss()
-    
-    # Entraînement
+
     history = train_model(
         model=model,
         train_loader=train_loader,
@@ -212,24 +215,21 @@ def train_model_task(config, dataset_info, loaders_info):
         device=device,
         epochs=config['epochs']
     )
-    
-    # Sauvegarder le modèle
+
     model_path = save_model(
-        model, 
-        optimizer, 
-        history, 
-        str(config['model_path'].parent), 
-        config['model_path'].name
+        model,
+        optimizer,
+        history,
+        str(model_path_obj.parent),
+        model_path_obj.name
     )
-    
+
     return {
-        "model_path": model_path,
+        "model_path": str(model_path),
         "history": history,
         "final_train_acc": history['train_accuracy'][-1],
         "final_val_acc": history['val_accuracy'][-1]
     }
-
-
 
 # ============================================================================
 # tack : evaluate model 
@@ -248,7 +248,7 @@ def evaluate_model_task(config, dataset_info, training_results):
     model = create_model(config['num_classes'], device)
     
     # Charger les poids
-    checkpoint = torch.load(training_results['model_path'], map_location=device)
+    checkpoint = torch.load(str(training_results['model_path']), map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
     
     # Évaluation

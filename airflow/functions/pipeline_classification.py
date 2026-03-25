@@ -8,6 +8,33 @@ import random
 import time
 import numpy as np
 import pandas as pd
+import datetime
+import mlflow
+import mlflow.pytorch
+
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
+try:
+    from functions.mlflow_utils import safe_mlflow_run, initialize_mlflow
+    if not initialize_mlflow(MLFLOW_TRACKING_URI):
+        print("⚠️ pipeline_classification ==> MLflow non disponible, continuation sans logging")
+except ImportError:
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    from contextlib import contextmanager
+
+    @contextmanager
+    def safe_mlflow_run(exp, run_name):
+        mlflow.set_experiment(exp)
+        run = mlflow.start_run(run_name=run_name)
+        try:
+            yield run
+        finally:
+            try:
+                mlflow.end_run()
+            except Exception:
+                pass
+
+    def initialize_mlflow(*args, **kwargs):
+        return False
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -207,70 +234,95 @@ def create_model(num_classes, device):
 # ============================================================================
 # function : train model
 # ============================================================================
-def train_model(model, train_loader, val_loader, loss_funct, optimizer, device, epochs=40):
+def train_model(model, train_loader, val_loader, loss_funct, optimizer, device, epochs=40, experiment_name="classification_variety"):
     """
     Entraîne le modèle
     """
     if not TORCH_AVAILABLE:
         return {"error": "PyTorch not available"}
     
-    train_loss = []
-    train_accuracy = []
-    val_accuracy = []
+    run_name = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + "_googlenet_train"
     
-    print(f"▶️ Début de l'entraînement sur {device}...")
-    start_time = time.time()
-    
-    for epoch in range(epochs):
-        start_time_epoch = time.time()
-        print(f"\n🔹 Epoch [{epoch+1}/{epochs}]")
+    with safe_mlflow_run(experiment_name, run_name) as run:
+        if run is not None:
+            mlflow.log_params({
+                "epochs": epochs,
+                "optimizer": type(optimizer).__name__,
+                "loss_function": type(loss_funct).__name__
+            })
+            mlflow.set_tags({
+                "model_type": "GoogLeNet",
+                "stage": "training",
+                "dataset_version": "v1.2",
+                "author": "Pipeline_Airflow"
+            })
+        else:
+            print("⚠️ Run MLflow non démarré, continuation sans logging")
         
-        # Phase train
-        model.train()
-        running_loss = 0.0
-        correct = 0
-        total = 0
+        train_loss = []
+        train_accuracy = []
+        val_accuracy = []
         
-        for images, labels in train_loader:
-            images, labels = images.to(device), labels.to(device)
+        print(f"▶️ Début de l'entraînement sur {device}...")
+        start_time = time.time()
+        
+        for epoch in range(epochs):
+            start_time_epoch = time.time()
+            print(f"\n🔹 Epoch [{epoch+1}/{epochs}]")
             
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = loss_funct(outputs, labels)
-            loss.backward()
-            optimizer.step()
+            # Phase train
+            model.train()
+            running_loss = 0.0
+            correct = 0
+            total = 0
             
-            running_loss += loss.item() * images.size(0)
-            _, predicted = outputs.max(1)
-            total += labels.size(0)
-            correct += predicted.eq(labels).sum().item()
-        
-        epoch_loss = running_loss / total
-        train_acc = correct / total
-        
-        # Phase validation
-        model.eval()
-        correct_val = 0
-        total_val = 0
-        with torch.no_grad():
-            for images, labels in val_loader:
+            for images, labels in train_loader:
                 images, labels = images.to(device), labels.to(device)
+                
+                optimizer.zero_grad()
                 outputs = model(images)
+                loss = loss_funct(outputs, labels)
+                loss.backward()
+                optimizer.step()
+                
+                running_loss += loss.item() * images.size(0)
                 _, predicted = outputs.max(1)
-                total_val += labels.size(0)
-                correct_val += predicted.eq(labels).sum().item()
-        
-        val_acc = correct_val / total_val
-        
-        # Sauvegarde
-        train_loss.append(epoch_loss)
-        train_accuracy.append(train_acc)
-        val_accuracy.append(val_acc)
-        
-        print(f"    Loss: {epoch_loss:.4f} | Train Acc: {train_acc:.4f} | Val Acc: {val_acc:.4f}")
-        end_time_epoch = time.time()
-        training_time_epoch = end_time_epoch - start_time_epoch
-        print(f"⏱️ Temps Epoch : {training_time_epoch/60:.2f} min")
+                total += labels.size(0)
+                correct += predicted.eq(labels).sum().item()
+            
+            epoch_loss = running_loss / total
+            train_acc = correct / total
+            
+            # Phase validation
+            model.eval()
+            correct_val = 0
+            total_val = 0
+            with torch.no_grad():
+                for images, labels in val_loader:
+                    images, labels = images.to(device), labels.to(device)
+                    outputs = model(images)
+                    _, predicted = outputs.max(1)
+                    total_val += labels.size(0)
+                    correct_val += predicted.eq(labels).sum().item()
+            
+            val_acc = correct_val / total_val
+            
+            # Sauvegarde
+            train_loss.append(epoch_loss)
+            train_accuracy.append(train_acc)
+            val_accuracy.append(val_acc)
+            
+            if run is not None:
+                mlflow.log_metrics({
+                    "train_loss": epoch_loss,
+                    "train_accuracy": train_acc,
+                    "val_accuracy": val_acc
+                }, step=epoch)
+            
+            print(f"    Loss: {epoch_loss:.4f} | Train Acc: {train_acc:.4f} | Val Acc: {val_acc:.4f}")
+            end_time_epoch = time.time()
+            training_time_epoch = end_time_epoch - start_time_epoch
+            print(f"⏱️ Temps Epoch : {training_time_epoch/60:.2f} min")
     
     end_time = time.time()
     training_time = end_time - start_time
@@ -280,14 +332,16 @@ def train_model(model, train_loader, val_loader, loss_funct, optimizer, device, 
         "train_loss": train_loss,
         "train_accuracy": train_accuracy,
         "val_accuracy": val_accuracy,
-        "training_time": training_time
+        "training_time": training_time,
+        # "mlflow_run_id": run.info.run_id
+        "mlflow_run_id": run.info.run_id if run else None
     }
 
 
 # ============================================================================
 # function : evaluate model
 # ============================================================================
-def evaluate_model(model, data_loader, loss_function, device, class_names):
+def evaluate_model(model, data_loader, loss_function, device, class_names, mlflow_run_id=None):
     """
     Évalue le modèle et retourne les métriques
     """
@@ -326,6 +380,21 @@ def evaluate_model(model, data_loader, loss_function, device, class_names):
     
     # Matrice de confusion
     cm = confusion_matrix(all_labels, all_preds)
+    
+    if mlflow_run_id:
+        try:
+            with mlflow.start_run(run_id=mlflow_run_id):
+                mlflow.log_metric("test_loss", avg_loss)
+                mlflow.log_metric("test_accuracy", accuracy)
+                
+                # Log simplified classification report metrics safely
+                for class_name in class_names:
+                    if class_name in report:
+                        mlflow.log_metric(f"precision_{class_name}", report[class_name]['precision'])
+                        mlflow.log_metric(f"recall_{class_name}", report[class_name]['recall'])
+                        mlflow.log_metric(f"f1_{class_name}", report[class_name]['f1-score'])
+        except Exception as e:
+            print(f"⚠️ Run MLflow non disponible pour l'évaluation: {e}")
     
     return {
         "loss": avg_loss,
@@ -396,7 +465,13 @@ def plot_confusion_matrix(cm, class_names, title="Matrice de confusion", save_pa
     plt.tight_layout()
     
     if save_path:
-        plt.savefig(f"{save_path}/confusion_matrix.png")
+        mat_path = f"{save_path}/confusion_matrix.png"
+        plt.savefig(mat_path)
+        try:
+            if mlflow.active_run():
+                mlflow.log_artifact(mat_path, artifact_path="evaluation_plots")
+        except Exception:
+            pass
     plt.close()
 
 
@@ -418,6 +493,13 @@ def save_model(model, optimizer, history, save_path, model_name):
         "optimizer_state_dict": optimizer.state_dict(),
         "history": history
     }, full_path)
+    
+    # Also log the model to MLflow natively
+    try:
+        if mlflow.active_run():
+            mlflow.pytorch.log_model(model, artifact_path="model", registered_model_name=model_name.replace(".pth", ""))
+    except Exception as e:
+        print(f"⚠️ Erreur lors du log du modèle: {e}")
     
     print(f"✅ Modèle sauvegardé : {full_path}")
     return full_path

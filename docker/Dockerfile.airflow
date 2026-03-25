@@ -10,3 +10,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 USER airflow
 COPY airflow/requirements_airflow.txt /requirements_airflow.txt
 RUN pip install --no-cache-dir -r /requirements_airflow.txt
+RUN pip install --no-cache-dir mlflow
