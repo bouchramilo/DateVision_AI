@@ -71,9 +71,11 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
         access_token = create_access_token(subject=user.email)
         return {"access_token": access_token, "token_type": "bearer"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error during login: {e}")
-        raise HTTPException(status_code=501, detail=f"Error lors la login : {e}")
+        raise HTTPException(status_code=500, detail=f"Error lors la login : {e}")
 # !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 

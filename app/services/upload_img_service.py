@@ -18,6 +18,8 @@ def load_image(image_file) -> Image.Image:
 # CONVERSIONS
 # =========================================================
 def pil_to_numpy(pil_img: Image.Image) -> np.ndarray:
+    if pil_img is None:
+        raise TypeError("pil_img cannot be None")
     return np.array(pil_img)
 
 
