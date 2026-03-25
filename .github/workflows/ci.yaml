@@ -3,7 +3,7 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ main, develop, 'feature/*' ]
+    branches: [ main, develop, 'feature/*', 'DAT-*' ]
   pull_request:
     branches: [ main ]
 
@@ -103,6 +103,17 @@ jobs:
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: false
       
       - name: Build Docker image
         id: build
@@ -111,7 +122,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           push: false
-          load: true
+          # load: true
           tags: ${{ env.DOCKER_IMAGE_NAME }}:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
