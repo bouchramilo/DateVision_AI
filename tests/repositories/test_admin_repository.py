@@ -35,23 +35,23 @@ def test_get_admin_stats_repo_success(mock_db):
         fixed_now = datetime(2024, 1, 15, 12, 0, 0)
         mock_datetime.utcnow.return_value = fixed_now
         
-        # 1. Mock total_users
+        # Mock total_users
         mock_total_users = MagicMock()
         mock_total_users.scalar.return_value = 150
         
-        # 2. Mock active_users
+        # Mock active_users
         mock_active_users = MagicMock()
         mock_active_users.filter.return_value.scalar.return_value = 45
         
-        # 3. Mock total_queries
+        # Mock total_queries
         mock_total_queries = MagicMock()
         mock_total_queries.scalar.return_value = 1200
         
-        # 4. Mock total_detections
+        # Mock total_detections
         mock_total_detections = MagicMock()
         mock_total_detections.scalar.return_value = 3500
         
-        # 5. Mock top_varieties
+        # Mock top_varieties
         mock_varieties = [
             Mock(variety="Majhoul", count=500),
             Mock(variety="Boufagous", count=400),
@@ -60,7 +60,7 @@ def test_get_admin_stats_repo_success(mock_db):
         mock_top_varieties = MagicMock()
         mock_top_varieties.group_by.return_value.order_by.return_value.limit.return_value.all.return_value = mock_varieties
         
-        # 6. Mock top_maturities
+        # Mock top_maturities
         mock_maturities = [
             Mock(maturity="Stage 3", count=800),
             Mock(maturity="Stage 2", count=600),

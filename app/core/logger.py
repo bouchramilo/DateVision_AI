@@ -19,7 +19,7 @@ class AppLogger():
     def get_logger(name: str):
         return logging.getLogger(name)
     
-    
+# ======================================================================================
 AppLogger.setup_logging()
 
 logger = AppLogger.get_logger(__name__)

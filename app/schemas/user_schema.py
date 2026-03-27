@@ -5,7 +5,7 @@ from typing_extensions import Self
 
 
 # =========================================================
-# 🔹 BASE USER
+# 🟢 BASE USER
 # =========================================================
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
@@ -24,7 +24,7 @@ class UserBase(BaseModel):
 
 
 # =========================================================
-# 🔹 CREATE USER
+# 🟢 CREATE USER
 # =========================================================
 class UserCreate(UserBase):
     email: EmailStr = Field(..., description="Email de l'utilisateur")
@@ -35,7 +35,7 @@ class UserCreate(UserBase):
 
 
 # =========================================================
-# 🔹 UPDATE USER
+# 🟢 UPDATE USER
 # =========================================================
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
@@ -56,7 +56,7 @@ class UserUpdate(BaseModel):
 
 
 # =========================================================
-# 🔹 DATABASE MODEL
+# 🟢 DATABASE MODEL
 # =========================================================
 class UserInDBBase(BaseModel):
     id: int
@@ -74,7 +74,7 @@ class User(UserInDBBase):
 
 
 # =========================================================
-# 🔹 LOGIN
+# 🟢 LOGIN
 # =========================================================
 class UserLogin(BaseModel):
     email: Optional[EmailStr] = None
@@ -95,7 +95,7 @@ class UserLoginResponse(BaseModel):
 
 
 # =========================================================
-# 🔹 CHANGE PASSWORD
+# 🟢 CHANGE PASSWORD
 # =========================================================
 class UserChangePassword(BaseModel):
     current_password: str

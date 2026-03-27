@@ -15,11 +15,10 @@ from app.models.result_model import Result
 
 
 # !=========================================================
-# 🔹 CREATE (SAVE)
+# 🟢 CREATE (SAVE)
 # !=========================================================
 def save_full_result(db, user_id, image, result):
 
-    # 1. créer history
     history = History(
         user_id=user_id,
         image=image,
@@ -29,7 +28,6 @@ def save_full_result(db, user_id, image, result):
     db.commit()
     db.refresh(history)
 
-    # 2. ajouter detections
     for det in result.get("detections", []):
         detection = Result(
             history_id=history.id,
@@ -55,7 +53,7 @@ def save_full_result(db, user_id, image, result):
 
 
 # !=========================================================
-# 🔹 MAIN FUNCTION (READ)
+# 🟢 MAIN FUNCTION (READ)
 # !=========================================================
 def get_all_histories_repo(
     db: Session,
@@ -72,15 +70,12 @@ def get_all_histories_repo(
         joinedload(History.user)
     )
 
-    #  filtre user
     if user_id:
         query = query.filter(History.user_id == user_id)
 
-    #  filtre date
     if date_from and date_to:
         query = query.filter(History.created_at.between(date_from, date_to))
 
-    #  filtre résultats
     if variety or maturity:
         query = query.join(Result)
 
@@ -90,7 +85,6 @@ def get_all_histories_repo(
         if maturity:
             query = query.filter(Result.maturity == maturity)
 
-    #  total
     total = query.count()
 
     #  pagination
@@ -108,10 +102,6 @@ def get_all_histories_repo(
         "data": histories
     }
     
-    
-    
-
-
 
 # !=========================================================
 # GET STATS (par USER)
@@ -119,22 +109,16 @@ def get_all_histories_repo(
 def get_user_stats(db: Session, user_id: int) -> Dict[str, Any]:
     """Récupère les statistiques complètes d'un utilisateur"""
     
-    # Statistiques de base
     summary = get_user_summary_stats(db, user_id)
     
-    # Classifications par variété et maturité
     classifications = get_user_classifications_stats(db, user_id)
     
-    # Activité hebdomadaire
     weekly_activity = get_user_weekly_activity(db, user_id)
     
-    # Distribution des scores de détection
     detection_scores = get_user_detection_scores_distribution(db, user_id)
     
-    # Prédictions récentes
     recent_predictions = get_user_recent_predictions(db, user_id)
     
-    # Informations utilisateur
     user_info = db.query(User).filter(User.id == user_id).first()
     
     return {
@@ -159,26 +143,22 @@ def get_user_stats(db: Session, user_id: int) -> Dict[str, Any]:
 def get_user_summary_stats(db: Session, user_id: int) -> Dict[str, Any]:
     """Statistiques résumées de l'utilisateur"""
     
-    # Nombre total d'images traitées
     total_images = db.query(func.count(History.id)).filter(
         History.user_id == user_id
     ).scalar() or 0
     
-    # Nombre total de détections
     total_detections = db.query(func.count(Result.id)).join(
         History, Result.history_id == History.id
     ).filter(
         History.user_id == user_id
     ).scalar() or 0
     
-    # Score de détection moyen
     avg_detection_score = db.query(func.avg(Result.detection_score)).join(
         History, Result.history_id == History.id
     ).filter(
         History.user_id == user_id
     ).scalar() or 0.0
     
-    # Nombre de variétés uniques
     unique_varieties = db.query(func.count(func.distinct(Result.variety))).join(
         History, Result.history_id == History.id
     ).filter(
@@ -188,7 +168,6 @@ def get_user_summary_stats(db: Session, user_id: int) -> Dict[str, Any]:
         )
     ).scalar() or 0
     
-    # Nombre de maturités uniques
     unique_maturities = db.query(func.count(func.distinct(Result.maturity))).join(
         History, Result.history_id == History.id
     ).filter(

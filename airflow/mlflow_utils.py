@@ -23,7 +23,6 @@ def wait_for_mlflow(tracking_uri, timeout=10):
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            # Utiliser requests avec verify=False pour ignorer les certificats
             response = requests.get(f"{tracking_uri}/health", timeout=2, verify=False)
             if response.status_code == 200:
                 logger.info(f"✅ MLflow est prêt: {tracking_uri}")
@@ -40,7 +39,6 @@ def get_mlflow_tracking_uri():
     """
     tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
     
-    # Essayer différentes méthodes de résolution
     hosts_to_try = [tracking_uri]
     
     # Essayer de résoudre l'IP
@@ -84,12 +82,10 @@ def initialize_mlflow(tracking_uri=None, clean_on_error=True):
             tracking_uri = get_mlflow_tracking_uri()
             mlflow.set_tracking_uri(tracking_uri)
         
-        # Désactiver la vérification d'hôte pour MLflow
         os.environ["MLFLOW_TRACKING_INSECURE_TLS"] = "true"
         os.environ["MLFLOW_TRACKING_IGNORE_TLS"] = "true"
         os.environ["MLFLOW_DISABLE_HOSTNAME_VALIDATION"] = "true"
         
-        # Vérifier la connexion
         response = requests.get(f"{tracking_uri}/health", timeout=5, verify=False)
         if response.status_code == 200:
             logger.info(f"✅ MLflow initialisé avec succès: {tracking_uri}")
@@ -105,43 +101,42 @@ def initialize_mlflow(tracking_uri=None, clean_on_error=True):
 @contextmanager
 def safe_mlflow_run(experiment_name, run_name):
     """
-    Context manager sécurisé pour les runs MLflow
+    Context manager sécurisé pour les runs MLflow.
+    Évite 'generator didn't stop after throw()' en ne yieldant pas après exception.
     """
     run = None
     try:
-        # Vérifier que MLflow est disponible
         tracking_uri = mlflow.get_tracking_uri()
-        logger.info(f"Utilisation de MLflow: {tracking_uri}")
-        
-        # Vérifier la connexion
         if not initialize_mlflow(tracking_uri):
-            logger.warning("MLflow non disponible, exécution sans logging")
+            logger.warning("⚠️ MLflow non disponible, exécution sans logging")
             yield None
             return
-        
+
         try:
             experiment = mlflow.get_experiment_by_name(experiment_name)
             if experiment is None:
-                mlflow.create_experiment(experiment_name)
-                logger.info(f"✅ Expérience créée: {experiment_name}")
+                exp_id = mlflow.create_experiment(experiment_name)
+                logger.info(f"✅ Expérience créée: {experiment_name} (ID: {exp_id})")
             else:
+                exp_id = experiment.experiment_id
                 logger.info(f"✅ Expérience existante: {experiment_name}")
         except Exception as e:
-            logger.warning(f"⚠️ Erreur lors de la création de l'expérience: {e}")
-            pass
-        
-        # Démarrer le run
-        run = mlflow.start_run(run_name=run_name, experiment_id=mlflow.get_experiment_by_name(experiment_name).experiment_id if mlflow.get_experiment_by_name(experiment_name) else None)
+            logger.warning(f"⚠️ Erreur Experience: {e}")
+            exp_id = None
+
+        run = mlflow.start_run(run_name=run_name, experiment_id=exp_id)
         logger.info(f"✅ Run MLflow démarré: {run.info.run_id}")
+        
         yield run
         
+        mlflow.end_run(status='FINISHED')
+
     except Exception as e:
-        logger.error(f"❌ Erreur MLflow: {e}")
-        logger.warning("⚠️ Continuation sans logging MLflow")
+        logger.error(f"❌ Erreur critique MLflow: {e}")
         if run:
             try:
-                mlflow.end_run()
+                mlflow.end_run(status='FAILED')
             except:
                 pass
-        yield None
+        logger.warning("⚠️ Erreur interceptée par safe_mlflow_run")
         return

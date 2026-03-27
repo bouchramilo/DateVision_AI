@@ -213,7 +213,8 @@ def train_model_task(config, dataset_info, loaders_info):
         loss_funct=loss_function,
         optimizer=optimizer,
         device=device,
-        epochs=config['epochs']
+        epochs=config['epochs'],
+        experiment_name=config.get('experiment_name', 'Default_Classification')
     )
 
     model_path = save_model(
@@ -221,7 +222,8 @@ def train_model_task(config, dataset_info, loaders_info):
         optimizer,
         history,
         str(model_path_obj.parent),
-        model_path_obj.name
+        model_path_obj.name,
+        mlflow_run_id=history.get("mlflow_run_id")
     )
 
     return {

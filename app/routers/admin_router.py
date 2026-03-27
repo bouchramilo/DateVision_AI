@@ -17,7 +17,7 @@ admin_router = APIRouter(prefix="/admin", tags=["admin routes"])
 
 
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# 🔹 ALL USERS
+# 🟢 ALL USERS
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 @admin_router.get("/all-users", response_model=list[UserSchema])
 def read_users(
@@ -32,7 +32,7 @@ def read_users(
 
 
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# 🔹 ALL HISTORIES (ADMIN)
+# 🟢 ALL HISTORIES (ADMIN)
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 @admin_router.get("/history")
 def get_all_histories(
@@ -65,7 +65,7 @@ def get_all_histories(
 
 
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# 🔹 ALL HISTORIES (ADMIN)
+# 🟢 ALL HISTORIES (ADMIN)
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 @admin_router.get("/users/{user_id}/stats", response_model=Dict[str, Any])
 async def get_user_stats_admin(
@@ -97,7 +97,7 @@ async def get_user_stats_admin(
         
 
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# 🔹 ALL STATS (ADMIN)
+# 🟢 ALL STATS (ADMIN)
 # !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 @admin_router.get("/stats")
 def get_admin_stats(

@@ -9,6 +9,16 @@ from app.core.config import settings
 from app.core.database import init_db
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.model_loader import load_all_models
+from fastapi import Request
+import time
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
+
+from app.core.metrics import (
+    API_REQUESTS_TOTAL,
+    API_REQUEST_LATENCY,
+    API_REQUESTS_IN_PROGRESS
+)
 
 # !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 @asynccontextmanager
@@ -17,7 +27,7 @@ async def lifespan(app: FastAPI):
 
     init_db()
 
-    # Charger les modèles ici
+    # charger les modèles
     load_all_models()
 
     print("✅ Application prête !")
@@ -45,8 +55,68 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+EXCLUDED_PATHS = {
+    "/metrics",
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+    "/health",
+    "/"
+}
+
+@app.middleware("http")
+async def prometheus_middleware(request: Request, call_next):
+    path = request.url.path
+
+    # Ignorer certains endpoints
+    if path in EXCLUDED_PATHS:
+        return await call_next(request)
+
+    API_REQUESTS_IN_PROGRESS.inc()
+
+    start_time = time.time()
+
+    try:
+        response = await call_next(request)
+
+        duration = time.time() - start_time
+
+        API_REQUESTS_TOTAL.labels(
+            method=request.method,
+            endpoint=path,
+            status=str(response.status_code)
+        ).inc()
+
+        API_REQUEST_LATENCY.labels(
+            endpoint=path
+        ).observe(duration)
+
+        return response
+
+    except Exception as e:
+        API_REQUESTS_TOTAL.labels(
+            method=request.method,
+            endpoint=path,
+            status="500"
+        ).inc()
+        raise e
+
+    finally:
+        API_REQUESTS_IN_PROGRESS.dec()
+
+
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ROUTERS
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+@app.get("/metrics")
+def metrics():
+    return Response(
+        generate_latest(),
+        media_type=CONTENT_TYPE_LATEST
+    )
+# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 @app.get("/")
 async def root():
     return {"message": "Welcome to DateVision AI API", "status": "online"}
@@ -54,10 +124,6 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
-
-
-# !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# ROUTERS
 
 # !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 app.include_router(auth_router, prefix=settings.API_V1_STR)

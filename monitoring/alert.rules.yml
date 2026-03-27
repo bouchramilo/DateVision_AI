@@ -1,23 +1,34 @@
+# monitoring\alert.rules.yml
 groups:
-- name: CliniQ-alerts
+- name: DateVision-alerts
   rules:
-  
-  # Latency Alert
-  - alert: HighRequestLatency
-    expr: rag_processing_seconds_sum / rag_processing_seconds_count > 5
-    for: 1m
+
+  # Container CPU Usage Alert
+  - alert: ContainerCpuHigh
+    expr: sum(rate(container_cpu_usage_seconds_total{name!=""}[5m])) by (name) * 100 > 80
+    for: 5m
     labels:
       severity: warning
     annotations:
-      summary: "High RAG Request Latency"
-      description: "Average RAG request processing time is > 5s (current value: {{ $value }}s)"
+      summary: "High Container CPU Usage"
+      description: "Container {{ $labels.name }} CPU usage is > 80% (current value: {{ $value }}%)"
 
-  # Error Rate Alert
-  - alert: HighErrorRate
-    expr: rate(rag_request_total{status="error"}[5m]) > 0
+  # Container Memory Usage Alert
+  - alert: ContainerMemoryHigh
+    expr: container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""} * 100 > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High Container Memory Usage"
+      description: "Container {{ $labels.name }} memory usage is > 80% (current value: {{ $value }}%)"
+
+  # Container Restart Alert
+  - alert: ContainerRestarted
+    expr: count(changes(container_last_seen{name!=""}[10m]) > 1) by (name)
     for: 1m
     labels:
-      severity: critical
+      severity: info
     annotations:
-      summary: "High RAG Error Rate"
-      description: "RAG requests are failing"
+      summary: "Container Restarted"
+      description: "Container {{ $labels.name }} has restarted recently"

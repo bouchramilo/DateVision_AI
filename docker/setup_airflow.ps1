@@ -1,4 +1,3 @@
-# setup_airflow.ps1
 Write-Host "Creating Airflow directory structure..." -ForegroundColor Green
 
 # Créer les dossiers nécessaires
@@ -24,7 +23,6 @@ foreach ($folder in $folders) {
     Write-Host "  Created: $folder" -ForegroundColor Yellow
 }
 
-# Créer les fichiers __init__.py
 $initFiles = @(
     "airflow\dags\__init__.py",
     "airflow\dags\functions\__init__.py",
