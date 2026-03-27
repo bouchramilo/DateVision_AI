@@ -32,8 +32,8 @@ SPLIT_DIR = f"{DATASET_DETECTION_DIR}/data_splited"
 # =========================================================
 # 🤖 MODELS
 # =========================================================
-MODEL_OUTPUT_DIR = f"{BASE_DIR}/models"
-YOLO_RUNS_DIR = f"{BASE_DIR}/analyse_configuration/detection/runs"
+MODEL_OUTPUT_DIR = "/opt/airflow/models"
+YOLO_RUNS_DIR = "/opt/airflow/analyse_configuration/detection/runs"
 
 # =========================================================
 # 🔁 MERGE RULES

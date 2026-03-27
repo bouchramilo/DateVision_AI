@@ -42,16 +42,13 @@ def get_user_history(
 
     query = db.query(History).options(joinedload(History.results))
 
-    # filtre user
     query = query.filter(History.user_id == user_id)
 
-    # filtre date
     if date_from and date_to:
         query = query.filter(
             History.created_at.between(date_from, date_to)
         )
 
-    # filtre variété / maturité (via join)
     if variety or maturity:
         query = query.join(Result)
 
@@ -61,7 +58,6 @@ def get_user_history(
         if maturity:
             query = query.filter(Result.maturity == maturity)
 
-    # total count
     total = query.count()
 
     # pagination

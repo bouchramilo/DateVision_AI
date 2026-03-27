@@ -8,15 +8,11 @@ from datetime import datetime
 from ultralytics import YOLO
 from ultralytics.utils import SETTINGS
 
-# Désactiver les callbacks MLflow d'Ultralytics au niveau des settings AVANT d'importer quoi que ce soit
 SETTINGS['mlflow'] = False
 os.environ["ULTRALYTICS_MLFLOW"] = "false"
 os.environ["ULTRALYTICS_WANDB"] = "false"
 os.environ["ULTRALYTICS_TENSORBOARD"] = "false"
-os.environ["MLFLOW_DISABLED"] = "true"
 
-# Importer les utilitaires MLflow
-# from mlflow_utils import safe_mlflow_run, initialize_mlflow, get_mlflow_tracking_uri
 try:
     import sys
     sys.path.append('/opt/airflow')
@@ -24,7 +20,6 @@ try:
     print("✅ MLflow utils importé avec succès")
 except ImportError as e:
     print(f"⚠️ Erreur d'import MLflow utils: {e}")
-    # Fallback si le module n'est pas trouvé
     from contextlib import contextmanager
     
     @contextmanager
@@ -128,12 +123,15 @@ def train_model(data_yaml, output_dir):
     results = None
     try:
         with safe_mlflow_run("YOLOv8_detection", run_name) as run:
+            import mlflow
+            mlflow.set_tracking_uri(get_mlflow_tracking_uri())
+            
             print(f"🟠🟠🟠🟠🟠🟠🟠🟠🟠🟠🟠📊 Logging dans MLflow - Run: {run} 🟠🟠🟠🟠🟠🟠🟠🟠🟠🟠🟠")
             if run and run.info and run.info.run_id:
                 print(f"📊 Logging dans MLflow - Run ID: {run.info.run_id}")
                 import mlflow
                 mlflow.log_params({
-                    "epochs": 1,  # Mettre à 50 pour production
+                    "epochs": 1,
                     "batch_size": 16,
                     "imgsz": 640,
                     "data_yaml": data_yaml,
@@ -148,16 +146,12 @@ def train_model(data_yaml, output_dir):
             else:
                 print("⚠️ Run MLflow non démarré, continuation sans logging")
 
-            # Entraînement du modèle - NE PAS PASSER d'argument mlflow
             model = YOLO("yolov8n.pt")
-            
-            # NE PAS modifier model.overrides - cela cause l'erreur
-            # Supprimer la ligne: model.overrides['mlflow'] = False
 
             results = model.train(
                 data=data_yaml,
                 imgsz=640,
-                epochs=1,  # Mettre à 50 pour production
+                epochs=1,
                 batch=16,
                 project=output_dir,
                 name="train",
@@ -165,7 +159,6 @@ def train_model(data_yaml, output_dir):
                 verbose=True
             )
             
-            # Log des résultats si MLflow est actif
             if run and run.info and run.info.run_id:
                 import mlflow
                 train_dir = os.path.join(output_dir, "train")
@@ -192,7 +185,12 @@ def train_model(data_yaml, output_dir):
                     print(f"✅ Résultats sauvegardés dans MLflow")
             
             print("✅ Entraînement terminé")
-            return results
+            
+            return {
+                "results": results,
+                "mlflow_run_id": run.info.run_id if run else None,
+                "train_dir": os.path.join(output_dir, "train")
+            }
             
     except Exception as e:
         print(f"❌ Erreur dans l'entraînement: {e}")
@@ -240,10 +238,48 @@ def predict_sample(model_path, image_dir):
 # =========================================================
 # SAVE MODEL
 # =========================================================
-def save_model(model_path, output_path):
+def save_model(model_path, output_path, mlflow_run_id=None):
     """
-    Sauvegarde le modèle
+    Sauvegarde le modèle avec versionnement et log dans MLflow
     """
-    model = YOLO(model_path)
-    model.save(output_path)
-    print(f"✅ Modèle sauvegardé: {output_path}")
+    import shutil
+    import os
+    from datetime import datetime
+    import mlflow
+
+    parent_dir = os.path.dirname(output_path)
+    if not os.path.exists(parent_dir):
+        os.makedirs(parent_dir, exist_ok=True)
+        print(f"📁 Répertoire créé: {parent_dir}")
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_name, extension = os.path.splitext(output_path)
+    versioned_path = f"{base_name}_{timestamp}{extension}"
+
+    try:
+        
+        shutil.copyfile(model_path, output_path)
+        shutil.copyfile(model_path, versioned_path)
+        
+        print(f"✅ Modèle sauvegardé (PROD): {output_path}")
+        print(f"✅ Modèle sauvegardé (VERSION): {versioned_path}")
+
+        def _log_to_mlflow():
+            if mlflow.active_run():
+                mlflow.log_artifact(output_path, artifact_path="models")
+                print(f"📦 Modèle loggué dans MLflow (Run actif)")
+            elif mlflow_run_id:
+                with mlflow.start_run(run_id=mlflow_run_id):
+                    mlflow.log_artifact(output_path, artifact_path="models")
+                    print(f"📦 Modèle loggué dans MLflow (Run ID: {mlflow_run_id})")
+
+        try:
+            _log_to_mlflow()
+        except Exception as mlflow_e:
+            print(f"⚠️ Erreur lors du log MLflow: {mlflow_e}")
+        
+        return output_path
+
+    except Exception as e:
+        print(f"❌ Erreur lors de la sauvegarde: {e}")
+        return None

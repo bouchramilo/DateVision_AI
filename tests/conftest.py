@@ -2,7 +2,7 @@
 import pytest 
 from unittest.mock import Mock, patch
 from app.core.config import settings
-import torch  # Ajout de l'import torch
+import torch 
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 

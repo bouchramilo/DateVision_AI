@@ -9,12 +9,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-
+# ======================================================================================
 def _trace_id_from_request(request: Request) -> str:
     trace_id = request.headers.get("x-request-id") or request.headers.get("x-correlation-id")
     return trace_id or str(uuid4())
 
-
+# ======================================================================================
 def _error_payload(
     *,
     request: Request,
@@ -37,7 +37,7 @@ def _error_payload(
         payload["error"]["details"] = details
     return payload
 
-
+# ======================================================================================
 @dataclass(eq=False)
 class AppError(Exception):
     """
@@ -54,37 +54,37 @@ class AppError(Exception):
     status_code: int = 400
     details: Any | None = None
 
-
+# ======================================================================================
 class NotFoundError(AppError):
     status_code = 404
     code = "not_found"
 
-
+# ======================================================================================
 class ConflictError(AppError):
     status_code = 409
     code = "conflict"
 
-
+# ======================================================================================
 class UnauthorizedError(AppError):
     status_code = 401
     code = "unauthorized"
 
-
+# ======================================================================================
 class ForbiddenError(AppError):
     status_code = 403
     code = "forbidden"
 
-
+# ======================================================================================
 class ValidationError(AppError):
     status_code = 422
     code = "validation_error"
 
-
+# ======================================================================================
 class DatabaseError(AppError):
     status_code = 500
     code = "database_error"
 
-
+# ======================================================================================
 def add_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error_handler(request: Request, exc: AppError) -> JSONResponse:
@@ -142,6 +142,8 @@ def add_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+        from app.core.logger import logger
+        logger.exception(f"Unhandled error: {exc}")
         return JSONResponse(
             status_code=500,
             content=_error_payload(

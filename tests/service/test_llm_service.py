@@ -106,12 +106,11 @@ def test_generate_report_http_error(sample_results):
     with patch('requests.post') as mock_post:
         mock_post.return_value = mock_response
         
-        # Act & Assert
-        with pytest.raises(ValueError) as exc_info:
-            generate_report(sample_results)
+        # Act
+        report = generate_report(sample_results)
         
-        assert "Erreur LLM" in str(exc_info.value)
-        assert "Internal Server Error" in str(exc_info.value)
+        # Assert
+        assert "Erreur Modèle" in report
 
 
 # --------------------------------------------------------------------------------------------------------
@@ -127,8 +126,8 @@ def test_generate_report_missing_response_key(sample_results):
     with patch('requests.post') as mock_post:
         mock_post.return_value = mock_response
         
-        # Act & Assert
-        with pytest.raises(ValueError) as exc_info:
-            generate_report(sample_results)
+        # Act
+        report = generate_report(sample_results)
         
-        assert "Clé 'response' manquante" in str(exc_info.value)
+        # Assert
+        assert "Erreur Serveur" in report

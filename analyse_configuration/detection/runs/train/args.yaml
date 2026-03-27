@@ -1,8 +1,8 @@
 task: detect
 mode: train
 model: yolov8n.pt
-data: ../data/dataset_detection/data.yaml
-epochs: 100
+data: /opt/airflow/data/dataset_detection/data.yaml
+epochs: 1
 time: null
 patience: 100
 batch: 16
@@ -10,9 +10,9 @@ imgsz: 640
 save: true
 save_period: -1
 cache: false
-device: null
+device: cpu
 workers: 8
-project: ../analyse_configuration/detection/runs
+project: /opt/airflow/analyse_configuration/detection/runs
 name: train
 exist_ok: true
 pretrained: true
@@ -29,7 +29,7 @@ amp: true
 fraction: 1.0
 profile: false
 freeze: null
-multi_scale: false
+multi_scale: 0.0
 compile: false
 overlap_mask: true
 mask_ratio: 4
@@ -43,6 +43,7 @@ max_det: 300
 half: false
 dnn: false
 plots: true
+end2end: null
 source: null
 vid_stride: 1
 stream_buffer: false
@@ -82,6 +83,8 @@ cls: 0.5
 dfl: 1.5
 pose: 12.0
 kobj: 1.0
+rle: 1.0
+angle: 1.0
 nbs: 64
 hsv_h: 0.015
 hsv_s: 0.7
@@ -103,4 +106,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: botsort.yaml
-save_dir: C:\Users\ramas\OneDrive\Desktop\DateVision_AI\analyse_configuration\detection\runs\train
+save_dir: /opt/airflow/analyse_configuration/detection/runs/train

@@ -21,7 +21,8 @@ def task_split(**kwargs):
 
 # =========================================================
 def task_train(**kwargs):
-    train_model(
+    # Retourner le dict pour XCom (qui contient mlflow_run_id)
+    return train_model(
         kwargs["data_yaml"],
         kwargs["output_dir"]
     )
@@ -45,7 +46,17 @@ def task_predict(**kwargs):
 
 # =========================================================
 def task_save(**kwargs):
+    # Récupérer l'ID de run MLflow de la tâche d'entraînement via XCom
+    ti = kwargs.get('ti')
+    mlflow_run_id = None
+    if ti:
+        train_results = ti.xcom_pull(task_ids='train_model')
+        if train_results and isinstance(train_results, dict):
+            mlflow_run_id = train_results.get('mlflow_run_id')
+            print(f"🔗 Récupération Run ID MLflow via XCom: {mlflow_run_id}")
+
     save_model(
         kwargs["model_path"],
-        kwargs["output_path"]
+        kwargs["output_path"],
+        mlflow_run_id=mlflow_run_id
     )

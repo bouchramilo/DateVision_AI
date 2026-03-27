@@ -16,16 +16,13 @@ def get_user_statistics(
     - Les utilisateurs normaux ne peuvent voir que leurs propres statistiques
     - Les admins peuvent voir les statistiques de n'importe quel utilisateur
     """
-    # Vérifier les permissions
     if requesting_user_role != 'ADMIN' and requesting_user_id != user_id:
         raise PermissionError("Vous n'avez pas les droits pour voir ces statistiques")
     
-    # Vérifier que l'utilisateur existe
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise ValueError("Utilisateur non trouvé")
     
-    # Récupérer les statistiques
     stats = get_user_stats(db, user_id)
     
     return stats

@@ -478,28 +478,50 @@ def plot_confusion_matrix(cm, class_names, title="Matrice de confusion", save_pa
 # ============================================================================
 # function : save model
 # ============================================================================
-def save_model(model, optimizer, history, save_path, model_name):
+def save_model(model, optimizer, history, save_path, model_name, mlflow_run_id=None):
     """
-    Sauvegarde le modèle entraîné
+    Sauvegarde le modèle entraîné (version PROD + version datée)
     """
     if not TORCH_AVAILABLE:
         return None
     
     os.makedirs(save_path, exist_ok=True)
     
+    # 1. Sauvegarde Production
     full_path = os.path.join(save_path, model_name)
-    torch.save({
+    save_dict = {
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "history": history
-    }, full_path)
+    }
+    torch.save(save_dict, full_path)
+    print(f"✅ Modèle sauvegardé (PROD) : {full_path}")
+
+    # 2. Sauvegarde Versionnée
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y%m%d")
+    name_part, ext_part = os.path.splitext(model_name)
+    versioned_name = f"{name_part}_{timestamp}{ext_part}"
+    versioned_path = os.path.join(save_path, versioned_name)
     
-    # Also log the model to MLflow natively
-    try:
+    torch.save(save_dict, versioned_path)
+    print(f"✅ Modèle sauvegardé (VERSION) : {versioned_path}")
+    
+    # 3. Log MLflow (Re-ouvrir le run si un ID est fourni)
+    def _log_mlflow():
         if mlflow.active_run():
             mlflow.pytorch.log_model(model, artifact_path="model", registered_model_name=model_name.replace(".pth", ""))
+            mlflow.log_artifact(full_path, artifact_path="saved_models")
+            print(f"📦 Modèle loggué dans MLflow (Run actif)")
+        elif mlflow_run_id:
+            with mlflow.start_run(run_id=mlflow_run_id):
+                mlflow.pytorch.log_model(model, artifact_path="model", registered_model_name=model_name.replace(".pth", ""))
+                mlflow.log_artifact(full_path, artifact_path="saved_models")
+                print(f"📦 Modèle loggué dans MLflow (Run ID: {mlflow_run_id})")
+
+    try:
+        _log_mlflow()
     except Exception as e:
-        print(f"⚠️ Erreur lors du log du modèle: {e}")
+        print(f"⚠️ Erreur lors du log du modèle MLflow: {e}")
     
-    print(f"✅ Modèle sauvegardé : {full_path}")
     return full_path

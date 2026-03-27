@@ -577,8 +577,6 @@ def test_get_user_recent_predictions_success(mock_db):
     # Arrange
     user_id = 1
     
-    # Utiliser des objets réels ou des mocks avec des attributs configurés
-    # car le code accède à r.id, r.avg_score, etc.
     class ResultRow:
         def __init__(self, id, image, created_at, detection_count, avg_score):
             self.id = id

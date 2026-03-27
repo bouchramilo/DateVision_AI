@@ -6,7 +6,6 @@ Configuration pour les pipelines de classification
 import os
 from pathlib import Path
 
-# Chemins de base
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 MODELS_DIR = BASE_DIR / "models"
@@ -15,6 +14,7 @@ ANALYSIS_DIR = BASE_DIR / "analyse_configuration"
 # Configuration pour la classification par variété
 VARIETY_CONFIG = {
     "name": "variety",
+    "experiment_name": "Variety_Classification",
     "dataset_dir": str(DATA_DIR / "dataset_classification" / "dataset_variety"),
     "output_dir": str(DATA_DIR / "dataset_classification" / "data_splited_v"),
     "model_path": str(MODELS_DIR / "model_classes_variete_googlenet_model.pth"),
@@ -33,6 +33,7 @@ VARIETY_CONFIG = {
 # Configuration pour la classification par maturité
 MATURITY_CONFIG = {
     "name": "maturity",
+    "experiment_name": "Maturity_Classification",
     "dataset_dir": str(DATA_DIR / "dataset_classification" / "dataset_maturity"),
     "output_dir": str(DATA_DIR / "dataset_classification" / "data_splited_m"),
     "model_path": str(MODELS_DIR / "model_classes_maturity_googlenet_model.pth"),
