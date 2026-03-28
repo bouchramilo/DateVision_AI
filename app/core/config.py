@@ -2,7 +2,7 @@ from pydantic import model_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # =========================================================
-# 🔹 GLOBAL SETTINGS
+# GLOBAL SETTINGS
 # =========================================================
 
 class Settings(BaseSettings):
@@ -23,9 +23,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 11520
     
     # --- AI Models ---
-    MODEL_CLASSIFICATION_BY_VARIETY: str = "model_classes_variete_googlenet_model.pth"
-    MODEL_CLASSIFICATION_BY_MATURITY: str = "model_classes_maturity_googlenet_model.pth"
-    MODEL_DETECTION: str = "date_detector_model.pt"
+    MODEL_CLASSIFICATION_BY_VARIETY: str = "a_model_classes_variete_googlenet_model.pth"
+    MODEL_CLASSIFICATION_BY_MATURITY: str = "a_model_classes_maturity_googlenet_model.pth"
+    MODEL_DETECTION: str = "a_date_detector_model.pt"
     
     # --- LLM Config (Ollama) ---
     LLM_PROVIDER: str = "ollama"

@@ -18,11 +18,11 @@ def load_all_models():
     get_yolo_model()
     print("✅ YOLOv8 detection model loaded")
 
-    # 2. Maturité classifier (Inception/EfficientNet)
+    # 2. Maturité classifier
     get_maturity_model()
     print("✅ Maturity classifier loaded")
 
-    # 3. Variété classifier (ResNet/GoogleNet)
+    # 3. Variété classifier
     get_variety_model()
     print("✅ Variety classifier loaded")
 
