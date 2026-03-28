@@ -157,7 +157,34 @@ docker compose -f docker\docker-compose.yml down
 
 ## 🚀 Les endpoints principales : 
 
-(je vais ajouter les endpoint et leur documentation ici)
+L'API est documentée via Swagger UI à l'adresse suivante : `http://localhost:8000/docs`
+
+### 🔑 Authentification (`/auth`)
+| Methode | Endpoint | Description | Auth |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/v1/auth/register` | Inscription d'un nouvel utilisateur | ❌ |
+| `POST` | `/api/v1/auth/login` | Connexion et obtention du token JWT | ❌ |
+| `GET` | `/api/v1/auth/me` | Informations de l'utilisateur connecté | 🔒 |
+
+### 🔮 Prédiction (`/pridect`)
+| Methode | Endpoint | Description | Auth |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/v1/pridect/predict` | Pipeline YOLO + LLM sur une image | 🔒 |
+
+### 👤 Utilisateur (`/users`)
+| Methode | Endpoint | Description | Auth |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/v1/users/history/{user_id}` | Historique des prédictions d'un utilisateur | 🔒 |
+| `GET` | `/api/v1/users/my-stats` | Statistiques personnelles de l'utilisateur | 🔒 |
+
+### 🛡️ Administration (`/admin`)
+| Methode | Endpoint | Description | Auth (Admin) |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/v1/admin/all-users` | Liste de tous les utilisateurs | 🔒 |
+| `GET` | `/api/v1/admin/history` | Historique global du système | 🔒 |
+| `GET` | `/api/v1/admin/users/{user_id}/stats` | Statistiques d'un utilisateur spécifique | 🔒 |
+| `GET` | `/api/v1/admin/stats` | Statistiques globales d'administration | 🔒 |
+
 
 
 --- 
